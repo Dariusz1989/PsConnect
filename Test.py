@@ -51,7 +51,6 @@ if __name__ == '__main__':
         w.setScaledContents(True)
         w.resize(result.width, result.height)
         pixmap = QPixmap()
-        # open('out.jpg', 'wb').write(msg.data)
         pixmap.loadFromData(msg.data)
         w.setPixmap(pixmap)
         w.show()
@@ -59,4 +58,5 @@ if __name__ == '__main__':
     except SystemExit:
         pass
     except:
-        input('Press any key to exit')
+        open('out.jpg', 'wb').write(msg.data)
+        os.startfile('out.jpg')
