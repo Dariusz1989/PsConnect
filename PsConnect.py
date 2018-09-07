@@ -36,6 +36,7 @@ class PsConnect:
         """
         Protocol.init(pwd)
         cls._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cls._socket.settimeout(10)  # 10s 超时
         try:
             cls._socket.connect((host, port))
         except Exception as e:
@@ -61,17 +62,23 @@ class PsConnect:
         :param img:   表示本次接收的数据是否为图片
         """
         assert cls._socket != None
-        # 数据长度
-        header = cls._socket.recv(4)
-        totalSize, = struct.unpack('>i', header)
-        recvSize = 0
-        totalData = header
-        while recvSize < totalSize:
-            recvData = cls._socket.recv(1024)
-            recvSize += len(recvData)
-            totalData += recvData
-        if img:
-            # 获取图片的代码后面会有其它字符串(其实是两个包)
-            totalData += cls._socket.recv(1024)
+        try:
+            # 数据长度
+            header = cls._socket.recv(4)
+            totalSize, = struct.unpack('>i', header)
+            recvSize = 0
+            totalData = header
+            while recvSize < totalSize:
+                recvData = cls._socket.recv(1024)
+                recvSize += len(recvData)
+                totalData += recvData
+            if img:
+                # 获取图片的代码后面会有其它字符串(其实是两个包)
+                try:  # 如果是超时则不管它
+                    totalData += cls._socket.recv(1024)
+                except:
+                    pass
+        except:
+            totalData = None
         message = Protocol.unpack(totalData)
         return message

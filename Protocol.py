@@ -125,6 +125,8 @@ class Protocol:
 
         :param rawContent: 待解包数据
         """
+        if not rawContent:
+            return Message(cls.TRANSACTIONID, cls.ERRORSTRING_TYPE, b'')
         # 解包整体[4消息长度 + 4状态 + 消息]
         mLength, status, content = struct.unpack(
             '>ii{}s'.format(len(rawContent) - 8), rawContent)
