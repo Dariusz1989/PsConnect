@@ -640,58 +640,13 @@ function setDocumentScrollTop(ypos)
 </head>
 <body class="markdown-body">
 <h1> <a id="photoshop-socket-connect" class="anchor" href="#photoshop-socket-connect" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Photoshop Socket Connect</h1> 
-<p>first:</p> 
+<h2> <a id="requirement" class="anchor" href="#requirement" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>requirement</h2> 
+<p>pycryptodomex</p> 
+<h2> <a id="first" class="anchor" href="#first" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>first</h2> 
 <p><a href="images/setting.jpg" target="_blank" rel="noopener noreferrer"><img src="images/setting.jpg" alt="setting" style="max-width:100%;" /></a></p> 
-<p>second: run Test.py</p> 
-<p><a href="images/result.jpg" target="_blank" rel="noopener noreferrer"><img src="images/result.jpg" alt="setting" style="max-width:100%;" /></a> <a href="images/logs.jpg" target="_blank" rel="noopener noreferrer"><img src="images/logs.jpg" alt="setting" style="max-width:100%;" /></a></p> 
-<p>Demo code:</p> 
-<div class="highlight highlight-source-python">
- <pre><span class="pl-k">import</span> os
-
-<span class="pl-k">from</span> Constant <span class="pl-k">import</span> CodeOpenImage, CodeGetImage
-<span class="pl-k">from</span> Protocol <span class="pl-k">import</span> Protocol
-<span class="pl-k">from</span> PsConnect <span class="pl-k">import</span> PsConnect
-
-<span class="pl-k">if</span> <span class="pl-c1">__name__</span> <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">'</span>__main__<span class="pl-pds">'</span></span>:
-    <span class="pl-c"><span class="pl-c">#</span> debug</span>
-    Protocol.<span class="pl-c1">DEBUG</span> <span class="pl-k">=</span> <span class="pl-c1">True</span>
-
-    PsConnect.connect(<span class="pl-s"><span class="pl-pds">'</span>127.0.0.1<span class="pl-pds">'</span></span>, <span class="pl-c1">49494</span>, <span class="pl-s"><span class="pl-pds">'</span>123456<span class="pl-pds">'</span></span>)
-    <span class="pl-c"><span class="pl-c">#</span> 获取ps版本</span>
-    msg <span class="pl-k">=</span> PsConnect.send(<span class="pl-s"><span class="pl-pds">'</span>app.version;<span class="pl-pds">'</span></span>)
-    <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">'</span>******<span class="pl-pds">'</span></span>, msg, msg.data)
-
-    <span class="pl-c"><span class="pl-c">#</span> 打开图片</span>
-    msg <span class="pl-k">=</span> PsConnect.send(CodeOpenImage.format(
-        os.path.abspath(<span class="pl-s"><span class="pl-pds">'</span>head.jpg<span class="pl-pds">'</span></span>).replace(<span class="pl-s"><span class="pl-pds">'</span><span class="pl-cce">\\</span><span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span>)))
-    result <span class="pl-k">=</span> msg.toDict()
-    <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">'</span>******<span class="pl-pds">'</span></span>, msg, msg.data, result)
-
-    <span class="pl-c"><span class="pl-c">#</span> 获取图片</span>
-    msg <span class="pl-k">=</span> PsConnect.send(CodeGetImage.format(
-        result.id, result.width, result.height))
-    <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">'</span>******<span class="pl-pds">'</span></span>, msg, msg.isImg())
-
-    <span class="pl-k">try</span>:
-        <span class="pl-k">import</span> sys
-        <span class="pl-k">from</span> PyQt5.QtWidgets <span class="pl-k">import</span> QApplication, QLabel
-        <span class="pl-k">from</span> PyQt5.QtGui <span class="pl-k">import</span> QPixmap
-        app <span class="pl-k">=</span> QApplication(sys.argv)
-        w <span class="pl-k">=</span> QLabel()
-        w.setScaledContents(<span class="pl-c1">True</span>)
-        w.resize(result.width, result.height)
-        pixmap <span class="pl-k">=</span> QPixmap()
-        <span class="pl-c"><span class="pl-c">#</span> open('out.jpg', 'wb').write(msg.data)</span>
-        pixmap.loadFromData(msg.data)
-        w.setPixmap(pixmap)
-        w.show()
-        sys.exit(app.exec_())
-    <span class="pl-k">except</span> <span class="pl-c1">SystemExit</span>:
-        <span class="pl-k">pass</span>
-    <span class="pl-k">except</span>:
-        <span class="pl-c1">input</span>(<span class="pl-s"><span class="pl-pds">'</span>Press any key to exit<span class="pl-pds">'</span></span>)
-
-</pre>
-</div>
+<h2> <a id="new-version" class="anchor" href="#new-version" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>new version</h2> 
+<p><a href="images/ScreenShot.png" target="_blank" rel="noopener noreferrer"><img src="images/ScreenShot.png" alt="ScreenShot" style="max-width:100%;" /></a></p> 
+<h2> <a id="old-version" class="anchor" href="#old-version" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>old version</h2> 
+<p><a href=".Version1.md.html">the old version 1</a></p>
 </body>
 </html>

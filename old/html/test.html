@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>XXTEA test</title>
+        <meta charset="UTF-8">
+        <script src="xxtea.min.js" type="text/javascript"></script>
+        <script src="xxtea.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var str = "哈哈";
+            var key = "0123456789abcdef";
+            var encrypt_data = XXTEA.encryptToBase64(str, key);
+            console.log(encrypt_data);
+            console.log(XXTEA.encrypt(str, key));
+            var decrypt_data = XXTEA.decryptFromBase64(encrypt_data, key);
+            console.log(decrypt_data);
+			
+			
+			
+            encrypt_data = xxtea_encrypt(str, key);
+            console.log(encrypt_data);
+            console.log(encrypt_data.length);
+			console.log(encodeURIComponent(encrypt_data));
+            decrypt_data = xxtea_decrypt(encrypt_data, key);
+            console.log(decrypt_data);
+			
+			
+			console.log(XXTEA.decryptFromBase64("7mYB8fse+dXr6oTO","0123456789abcdef"));
+        </script>
+    </body>
+</html>
