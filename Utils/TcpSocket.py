@@ -69,7 +69,9 @@ class TcpSocket(QTcpSocket):
                     self.messageReceived.emit(data)
             else:  # 继续读取
                 self._data += self.read(self._length)
-                if len(self._data) == self._length:  # 读取完成了
+                # >= 放弃随图片一起发过来的字符（解码的时候只解析前面数据）
+                # 忽略了后面的数据
+                if len(self._data) >= self._length:  # 读取完成了
                     self._length = 0
                     data = self._hdata + self._data
                     self._hdata = b''
