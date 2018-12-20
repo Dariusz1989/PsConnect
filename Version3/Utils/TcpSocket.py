@@ -24,8 +24,6 @@ class TcpSocket(QTcpSocket):
 
     # 连接被关闭断开时发出
     connectClosed = pyqtSignal(str)
-    # 接收到消息
-    messageReceived = pyqtSignal(bytes)
 
     def __init__(self, *args, **kwargs):
         super(TcpSocket, self).__init__(*args, **kwargs)
@@ -48,9 +46,8 @@ class TcpSocket(QTcpSocket):
     def onRemoteReadyRead(self):
         # 读取接收的数据
         if self.bytesAvailable():
-            data = self.readAll().data()  # 这里未做大量数据的接收，一般少量数据可以一次性接收完毕
-            print('接收到数据: ', type(data), data)
-            self.messageReceived.emit(data)
+            data = self.readAll()
+            print('接收到数据: ', type(data), data.data())
 
     def onRemoteError(self, socketError):
         if socketError == self.ConnectionRefusedError:

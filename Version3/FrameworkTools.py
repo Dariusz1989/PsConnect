@@ -17,10 +17,12 @@ from urllib.parse import unquote
 from PyQt5.Qsci import QsciLexerJavaScript, QsciScintilla, QsciAPIs
 from PyQt5.QtCore import QSettings, pyqtSlot, Qt
 from PyQt5.QtGui import QFont
+from PyQt5.QtNetwork import QHostAddress
 from PyQt5.QtWidgets import QWidget, QMessageBox, QProgressDialog
 
 from UiFrameworkTools import Ui_FormFrameworkTools
 from Utils.Protocol import Protocol
+from Utils.TcpServer import TcpServer
 from Utils.TcpSocket import TcpSocket
 
 
@@ -33,20 +35,39 @@ __Version__ = "Version 1.0"
 # 案例模版
 Template = r"""#target photoshop
 
-function test2() {
-    return '{"version":"' + app.version +'", "method":"showMessage", "params": ["' + File.encode('测试内容') +'"]}';
+function sendData(data) {
+    try {
+        var socket = new Socket;        // 创建socket连接
+        socket.timeout = 20;            // 设置超时20秒
+        if(socket.open("#HOST#:#PORT#")) {
+            // 如果连接上软件客服端才能继续操作
+            // 开始发送请求参数的命令
+            socket.writeln(data);
+            // 处理完成关闭连接
+            socket.close();
+            delete socket;
+        }
+    } catch(e) {
+        alert(e);
+    }
 }
 
-// 等待2秒
-$.sleep(2000);
+function test1() {
+    // 测试发送版本数据
+    sendData('{"version":"' + app.version +'"}');
+}
+
+function test2() {
+    // 测试发送调用远程函数
+    // 发送中文消息要对它编码否则显示为乱码
+    sendData('{"version":"' + app.version +'", "method":"showMessage", "params": ["' + File.encode('测试内容') +'"]}');
+}
+
+// 等待5秒
+$.sleep(5000);
 
 // 这里是需要被替换的具体函数
-// #Function#
-// test2();
-"""
-
-CodeGetVersion = r"""#target photoshop
-'{"version":"' + app.version +'"}';
+//#Function#
 """
 
 
@@ -55,11 +76,15 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def __init__(self, *args, **kwargs):
         super(Window, self).__init__(*args, **kwargs)
         self.setupUi(self)
+        self.groupBoxPs.setEnabled(False)
         self._initSocket()
         self._initCodeEdit()
 
         # 配置
         self._setting = QSettings('PsConnectFrameworkTools', 'Settings')
+        # 本地端口
+        self.spinBoxPort.setValue(
+            self._setting.value('spinBoxPort', 59595, int))
         # ip地址
         self.lineEditAddress.setText(self._setting.value(
             'lineEditAddress', '127.0.0.1', str))
@@ -71,15 +96,17 @@ class Window(QWidget, Ui_FormFrameworkTools):
             'lineEditPassword', '', str))
         # 设置参数
         self.argsEdit.setPlainText(self._setting.value(
-            'argsEdit', 'test2();', str))
+            'argsEdit', 'test1();\ntest2();', str))
         # 设置编辑器里的代码
         self.codeEdit.setText(self._setting.value('codeEdit', Template, str))
 
     def _initSocket(self):
+        # 初始化server(用于接收ps返回消息)
+        self._server = TcpServer(self)
+        self._server.messageReceived.connect(self.onMessageReceived)
         # 初始化client(用于连接ps)
         self._client = TcpSocket(self)
-        self._client.messageReceived.connect(self.onMessageReceived)
-        self._client.connected.connect(self.onConnectSuccessed)
+        self._client.connected.connect(self.onConnectSuccessed)  # 连接成功
         self._client.connectClosed.connect(self.onConnectClosed)
 
     def _initCodeEdit(self):
@@ -142,24 +169,15 @@ class Window(QWidget, Ui_FormFrameworkTools):
             0, self.codeEdit.fontMetrics().width(str(self.codeEdit.lines())) + 5)
 
     def onMessageReceived(self, data):
-        # 接收到ps返回的结果就关闭进度条
+        # 接收到ps中js发送的结果
         self.closeWait()
-        if data.find(b'disconnecting') > -1:
-            # 密码错误
-            QMessageBox.critical(self, '错误', '密码错误')
-            return
         # 解码数据
         try:
-            message = Protocol.unpack(data)
-            print('message:', message)
-            data = message.data.decode()
-            print('data:', data)
+            data = data.decode()
         except Exception as e:
             self.resultEdit.append('解码数据错误: ' + str(e))
             return
         self.resultEdit.append(data)
-        if len(data) < 6:
-            return
         # 尝试解析消息
         try:
             data = json.loads(data)
@@ -179,12 +197,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
             traceback.print_exc()
 
     def onConnectSuccessed(self):
-        # 连接成功发送代码验证密码是否正确
-        self.closeWait()  # 关闭正在连接中的进度条
-        self._client.write(Protocol.pack(CodeGetVersion, 2))
-        self._client.flush()
-        Protocol.increase()
-        self.showWait('正在验证密码...')
+        self.closeWait()
+        QMessageBox.information(self, '恭喜', '连接成功')
 
     def onConnectClosed(self, message=None):
         # 连接被断开
@@ -207,9 +221,19 @@ class Window(QWidget, Ui_FormFrameworkTools):
         self.codeEdit.setText(Template)
 
     @pyqtSlot()
-    def on_buttonGetImage_clicked(self):
-        # 获取ps中的图片过来显示
-        pass
+    def on_buttonStartServer_clicked(self):
+        # 开启本地服务的按钮
+        if not self._server.listen(QHostAddress.LocalHost, self.spinBoxPort.value()):
+            QMessageBox.critical(
+                self, '错误', '监听本地端口{}失败，请尝试更换端口试试'.format(self.spinBoxPort.value()))
+            return
+        # 保存本地端口到配置
+        self._setting.setValue('spinBoxPort', self.spinBoxPort.value())
+        self._setting.sync()
+        # 本地服务器开启成功则禁用
+        self.buttonStartServer.setEnabled(False)
+        self.spinBoxPort.setEnabled(False)
+        self.groupBoxPs.setEnabled(True)
 
     @pyqtSlot()
     def on_buttonConnect_clicked(self):
@@ -246,7 +270,6 @@ class Window(QWidget, Ui_FormFrameworkTools):
                 'codeEdit', self.codeEdit.text().strip())
             self._setting.sync()
             self._client.write(Protocol.pack(self.formatCode(code), 2))  # 发送数据
-            self._client.flush()
             Protocol.increase()  # 自增1
             self.showWait('正在处理中...')  # 显示进度条
         else:
@@ -255,7 +278,9 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def formatCode(self, code):
         # 格式化code
         code = code.replace(
-            '// #Function#', self.argsEdit.toPlainText().strip())
+            '#HOST#', '127.0.0.1').replace(
+                '#PORT#', str(self.spinBoxPort.value())).replace(
+                    '//#Function#', self.argsEdit.toPlainText().strip())
         print('格式化code, 长度: ', len(code))
         return code
 
@@ -264,16 +289,19 @@ class Window(QWidget, Ui_FormFrameworkTools):
         self._wdialog = QProgressDialog(text, '', 0, 0, self)
         self._wdialog.setWindowFlags(
             self._wdialog.windowFlags() | Qt.FramelessWindowHint)
-        self._wdialog.setWindowModality(Qt.WindowModal)
         self._wdialog.setWindowTitle('请稍候')
         self._wdialog.setCancelButton(None)
-        self._wdialog.show()
+        self._wdialog.exec_()
 
     def closeWait(self):
         # 隐藏或者关闭等待进度条
         self._wdialog.accept()
 
     def closeEvent(self, event):
+        if self._server.isListening():
+            # 关闭本地服务器
+            self._server.close()
+            self._server.deleteLater()
         # 断开和ps的连接
         self._client.blockSignals(True)
         self._client.abort()

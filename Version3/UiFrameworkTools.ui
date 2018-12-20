@@ -88,6 +88,51 @@
      </property>
     </widget>
    </item>
+   <item row="0" column="1">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>本地端口设置</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="spacing">
+       <number>2</number>
+      </property>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>2</number>
+      </property>
+      <property name="bottomMargin">
+       <number>2</number>
+      </property>
+      <item>
+       <widget class="QSpinBox" name="spinBoxPort">
+        <property name="minimum">
+         <number>59595</number>
+        </property>
+        <property name="maximum">
+         <number>65534</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonStartServer">
+        <property name="text">
+         <string>开启本地服务</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonResetCode">
+        <property name="text">
+         <string>重置代码</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item row="1" column="1">
     <widget class="QGroupBox" name="groupBoxPs">
      <property name="title">
@@ -147,41 +192,6 @@
       </item>
       <item row="1" column="1" colspan="2">
        <widget class="QLineEdit" name="lineEditPassword"/>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>辅助</string>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="spacing">
-       <number>2</number>
-      </property>
-      <property name="topMargin">
-       <number>2</number>
-      </property>
-      <property name="rightMargin">
-       <number>2</number>
-      </property>
-      <property name="bottomMargin">
-       <number>2</number>
-      </property>
-      <item>
-       <widget class="QPushButton" name="buttonResetCode">
-        <property name="text">
-         <string>默认代码</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonGetImage">
-        <property name="text">
-         <string>获取PS中的图片</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </widget>
