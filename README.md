@@ -9,9 +9,9 @@ pycryptodomex
 ## new version
 only use QTcpSocket send data and get data
 
-![ScreenShot](images/ScreenShot1.png)
+support get image
 
-![ScreenShot](images/ScreenShot2.png)
+![ScreenShot](images/ScreenShot.gif)
 
 ## old version
 [the old version 1](Version1)

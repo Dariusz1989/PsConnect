@@ -16,9 +16,10 @@ from urllib.parse import unquote
 
 from PyQt5.Qsci import QsciLexerJavaScript, QsciScintilla, QsciAPIs
 from PyQt5.QtCore import QSettings, pyqtSlot, Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import QWidget, QMessageBox, QProgressDialog
 
+from ImageWidget import ImageView
 from UiFrameworkTools import Ui_FormFrameworkTools
 from Utils.Protocol import Protocol
 from Utils.TcpSocket import TcpSocket
@@ -31,7 +32,7 @@ __Copyright__ = "Copyright (c) 2018 Irony"
 __Version__ = "Version 1.0"
 
 # 案例模版
-Template = r"""#target photoshop
+CodeDefault = r"""#target photoshop
 
 function test2() {
     return '{"version":"' + app.version +'", "method":"showMessage", "params": ["' + File.encode('测试内容') +'"]}';
@@ -45,7 +46,24 @@ $.sleep(2000);
 // test2();
 """
 
+# 获取版本
 CodeGetVersion = r"""#target photoshop
+'{"version":"' + app.version +'"}';
+"""
+
+# 获取图片
+CodeGetImage = r"""#target photoshop
+if(app.documents.length > 0) {
+    var idNS = stringIDToTypeID( "sendDocumentThumbnailToNetworkClient" );
+    var desc1 = new ActionDescriptor();
+    // 当前图片的ID
+    desc1.putInteger( stringIDToTypeID( "documentID" ), app.activeDocument.id );
+    desc1.putInteger( stringIDToTypeID( "width" ), 800 );
+    desc1.putInteger( stringIDToTypeID( "height" ), 600 );
+    desc1.putInteger( stringIDToTypeID( "format" ), "1" );
+    executeAction( idNS, desc1, DialogModes.NO );
+}
+// 有个默认返回值
 '{"version":"' + app.version +'"}';
 """
 
@@ -56,6 +74,7 @@ class Window(QWidget, Ui_FormFrameworkTools):
         super(Window, self).__init__(*args, **kwargs)
         self.setupUi(self)
         self._passwordError = False
+        self.imageWidget = ImageView()
         self._initSocket()
         self._initCodeEdit()
 
@@ -74,7 +93,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
         self.argsEdit.setPlainText(self._setting.value(
             'argsEdit', 'test2();', str))
         # 设置编辑器里的代码
-        self.codeEdit.setText(self._setting.value('codeEdit', Template, str))
+        self.codeEdit.setText(self._setting.value(
+            'codeEdit', CodeDefault, str))
 
     def _initSocket(self):
         # 初始化client(用于连接ps)
@@ -155,16 +175,23 @@ class Window(QWidget, Ui_FormFrameworkTools):
         try:
             message = Protocol.unpack(data)
             print('message:', message)
-            data = message.data.decode()
-            print('data:', data)
+#             print('data:', data)
         except Exception as e:
             self.resultEdit.append('解码数据错误: ' + str(e))
             return
-        self.resultEdit.append(data)
         if len(data) < 6:
             return
-        # 尝试解析消息
+        if message.isImg():
+            self.analysisImage(message.data)
+            return
+        if message.isText():
+            self.analysisText(message)
+
+    def analysisText(self, message):
+        # 尝试解析文本消息
         try:
+            data = message.data.decode()
+            self.resultEdit.append(data)
             data = json.loads(data)
             # 获取版本
             version = data.get('version', '0.')
@@ -180,6 +207,15 @@ class Window(QWidget, Ui_FormFrameworkTools):
         except Exception as e:
             print('解析数据错误:', e)
             traceback.print_exc()
+
+    def analysisImage(self, data):
+        # 解析图片消息
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        print('image is null:', pixmap.isNull())
+        if not pixmap.isNull():
+            self.imageWidget.setPixmap(pixmap)
+            self.imageWidget.show()
 
     def onConnectSuccessed(self):
         # 连接成功发送代码验证密码是否正确
@@ -209,12 +245,12 @@ class Window(QWidget, Ui_FormFrameworkTools):
     @pyqtSlot()
     def on_buttonResetCode_clicked(self):
         # 重置代码区域为默认
-        self.codeEdit.setText(Template)
+        self.codeEdit.setText(CodeDefault)
 
     @pyqtSlot()
     def on_buttonGetImage_clicked(self):
         # 获取ps中的图片过来显示
-        pass
+        self.codeEdit.setText(CodeGetImage)
 
     @pyqtSlot()
     def on_buttonConnect_clicked(self):
@@ -279,6 +315,7 @@ class Window(QWidget, Ui_FormFrameworkTools):
         self._wdialog.accept()
 
     def closeEvent(self, event):
+        self.imageWidget.close()
         # 断开和ps的连接
         self._client.blockSignals(True)
         self._client.abort()

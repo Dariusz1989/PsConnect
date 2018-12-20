@@ -9,6 +9,8 @@ Created on 2018年12月19日
 @file: Utils.TcpSocket
 @description: 
 """
+import struct
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtNetwork import QTcpSocket
 
@@ -29,6 +31,9 @@ class TcpSocket(QTcpSocket):
 
     def __init__(self, *args, **kwargs):
         super(TcpSocket, self).__init__(*args, **kwargs)
+        self._length = 0
+        self._data = b''
+        self._hdata = b''
         # 连接成功的信号
         self.connected.connect(self.onRemoteConnected)
         # 连接丢失信号
@@ -48,9 +53,28 @@ class TcpSocket(QTcpSocket):
     def onRemoteReadyRead(self):
         # 读取接收的数据
         if self.bytesAvailable():
-            data = self.readAll().data()  # 这里未做大量数据的接收，一般少量数据可以一次性接收完毕
-            print('接收到数据: ', type(data), data)
-            self.messageReceived.emit(data)
+            if self._length == 0:
+                # 读取4字节数据包长度
+                self._hdata = self.read(4)
+                if not self._hdata:
+                    return
+                self._length, = struct.unpack('>i', self._hdata)
+                print('length:', self._length)
+                self._data += self.read(self._length)
+                if len(self._data) == self._length:  # 可能第一次就读取完成了
+                    self._length = 0
+                    data = self._hdata + self._data
+                    self._hdata = b''
+                    self._data = b''
+                    self.messageReceived.emit(data)
+            else:  # 继续读取
+                self._data += self.read(self._length)
+                if len(self._data) == self._length:  # 读取完成了
+                    self._length = 0
+                    data = self._hdata + self._data
+                    self._hdata = b''
+                    self._data = b''
+                    self.messageReceived.emit(data)
 
     def onRemoteError(self, socketError):
         if socketError == self.ConnectionRefusedError:

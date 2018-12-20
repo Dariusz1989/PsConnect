@@ -24,22 +24,27 @@ __Version__ = "Version 1.0"
 
 class Message:
 
-    def __init__(self, tid, ctype, data):
+    def __init__(self, tid, ctype, data, status=0):
         '''
-        :param tid:   传输id
-        :param ctype: 内容类型
-        :param data:  内容
+        :param tid:    传输id
+        :param ctype:  内容类型
+        :param data:   内容
+        :param status: 状态
         '''
         self.tid = tid
         self.ctype = ctype
         self.data = data
+        self.status = status
 
     def isImg(self):
         return self.ctype == 3
 
+    def isText(self):
+        return self.ctype == 2
+
     def __str__(self):
-        return '[tid: {}, type: {}, isImage: {}, data len: {}]'.format(
-            self.tid, self.ctype, self.isImg(), len(self.data))
+        return '[status: {}, tid: {}, type: {}, isText: {}, isImage: {}, data len: {}]'.format(
+            self.status, self.tid, self.ctype, self.isText(), self.isImg(), len(self.data))
 
 
 class Protocol:
@@ -167,7 +172,7 @@ class Protocol:
         version, transactionid, ctype, content = struct.unpack(
             '>iii{}s'.format(len(content) - cls.PROTOCOL_LENGTH), content)
         if ctype == cls.IMAGE_TYPE:
-            # 如果是图片需要去掉头部1字节的类型
+            # 如果是图片需要去掉头部1字节的类型 ==1表示jpg ==2表示pixmap
             content = content[1:]
         if cls.DEBUG:
             print('Protocol Version:    ', version)
@@ -176,4 +181,4 @@ class Protocol:
             print('Content:             ',
                   content[:10] + b'......' + content[-10:])
 
-        return Message(transactionid, ctype, content)
+        return Message(transactionid, ctype, content, status)
