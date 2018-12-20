@@ -55,6 +55,7 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def __init__(self, *args, **kwargs):
         super(Window, self).__init__(*args, **kwargs)
         self.setupUi(self)
+        self._passwordError = False
         self._initSocket()
         self._initCodeEdit()
 
@@ -145,9 +146,11 @@ class Window(QWidget, Ui_FormFrameworkTools):
         # 接收到ps返回的结果就关闭进度条
         self.closeWait()
         if data.find(b'disconnecting') > -1:
+            self._passwordError = True
             # 密码错误
             QMessageBox.critical(self, '错误', '密码错误')
             return
+        self._passwordError = False
         # 解码数据
         try:
             message = Protocol.unpack(data)
@@ -189,6 +192,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def onConnectClosed(self, message=None):
         # 连接被断开
         self.closeWait()
+        if self._passwordError:
+            return
         if QMessageBox.question(
                 self, '错误', message + '\n是否重连？',
                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
