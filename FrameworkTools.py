@@ -15,9 +15,9 @@ import traceback
 from urllib.parse import unquote
 
 from PyQt5.Qsci import QsciLexerJavaScript, QsciScintilla, QsciAPIs
-from PyQt5.QtCore import QSettings, pyqtSlot, Qt
+from PyQt5.QtCore import QSettings, pyqtSlot, Qt, QStandardPaths
 from PyQt5.QtGui import QFont, QPixmap
-from PyQt5.QtWidgets import QWidget, QMessageBox, QProgressDialog
+from PyQt5.QtWidgets import QWidget, QMessageBox, QProgressDialog, QFileDialog
 
 from ImageWidget import ImageView
 from UiFrameworkTools import Ui_FormFrameworkTools
@@ -192,6 +192,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
         try:
             data = message.data.decode()
             self.resultEdit.append(data)
+            if not data.startswith('{') and not data.endswith('}'):
+                return
             data = json.loads(data)
             # 获取版本
             version = data.get('version', '0.')
@@ -220,7 +222,7 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def onConnectSuccessed(self):
         # 连接成功发送代码验证密码是否正确
         self.closeWait()  # 关闭正在连接中的进度条
-        self._client.write(Protocol.pack(CodeGetVersion, 2))
+        self._client.write(Protocol.pack(CodeGetVersion, Protocol.JAVASCRIPT_TYPE))
         self._client.flush()
         Protocol.increase()
         self.showWait('正在验证密码...')
@@ -251,6 +253,24 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def on_buttonGetImage_clicked(self):
         # 获取ps中的图片过来显示
         self.codeEdit.setText(CodeGetImage)
+
+    @pyqtSlot()
+    def on_buttonSendImage_clicked(self):
+        # 发送图片到ps中
+        file, _ = QFileDialog.getOpenFileName(
+            self, '选择图片', QStandardPaths.writableLocation(QStandardPaths.DesktopLocation), '*.jpg')
+        if not file:
+            return
+        file = file.replace('\\', '/')
+        if self._client.state() == self._client.ConnectedState and self._client.isWritable():
+            # 这里必须要有一个1表示图片类型
+            data = b'\x01' + open(file, 'rb').read()
+            self._client.write(Protocol.pack(data, Protocol.IMAGE_TYPE))  # 发送图片数据
+            self._client.flush()
+            Protocol.increase()  # 自增1
+            self.showWait('正在发送中...')  # 显示进度条
+        else:
+            QMessageBox.critical(self, '错误', '未连接或者不能发送数据')
 
     @pyqtSlot()
     def on_buttonConnect_clicked(self):
@@ -286,7 +306,7 @@ class Window(QWidget, Ui_FormFrameworkTools):
             self._setting.setValue(
                 'codeEdit', self.codeEdit.text().strip())
             self._setting.sync()
-            self._client.write(Protocol.pack(self.formatCode(code), 2))  # 发送数据
+            self._client.write(Protocol.pack(self.formatCode(code), Protocol.JAVASCRIPT_TYPE))  # 发送数据
             self._client.flush()
             Protocol.increase()  # 自增1
             self.showWait('正在处理中...')  # 显示进度条

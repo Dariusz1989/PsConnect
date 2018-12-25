@@ -88,6 +88,9 @@ class Ui_FormFrameworkTools(object):
         self.buttonGetImage = QtWidgets.QPushButton(self.groupBox)
         self.buttonGetImage.setObjectName("buttonGetImage")
         self.horizontalLayout.addWidget(self.buttonGetImage)
+        self.buttonSendImage = QtWidgets.QPushButton(self.groupBox)
+        self.buttonSendImage.setObjectName("buttonSendImage")
+        self.horizontalLayout.addWidget(self.buttonSendImage)
         self.gridLayout.addWidget(self.groupBox, 0, 1, 1, 1)
         self.gridLayout.setColumnStretch(0, 3)
 
@@ -109,6 +112,7 @@ class Ui_FormFrameworkTools(object):
         self.groupBox.setTitle(_translate("FormFrameworkTools", "辅助"))
         self.buttonResetCode.setText(_translate("FormFrameworkTools", "默认代码"))
         self.buttonGetImage.setText(_translate("FormFrameworkTools", "获取PS中的图片"))
+        self.buttonSendImage.setText(_translate("FormFrameworkTools", "发送图片"))
 
 from PyQt5 import Qsci
 
