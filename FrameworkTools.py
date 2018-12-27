@@ -261,7 +261,6 @@ class Window(QWidget, Ui_FormFrameworkTools):
             self, '选择图片', QStandardPaths.writableLocation(QStandardPaths.DesktopLocation), '*.jpg')
         if not file:
             return
-        file = file.replace('\\', '/')
         if self._client.state() == self._client.ConnectedState and self._client.isWritable():
             # 这里必须要有一个1表示图片类型
             data = b'\x01' + open(file, 'rb').read()
