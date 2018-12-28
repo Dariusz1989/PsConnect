@@ -10,14 +10,18 @@ Created on 2018年11月29日
 @description: 
 """
 
+import cgitb
 import json
+import os
+import sys
 import traceback
 from urllib.parse import unquote
 
 from PyQt5.Qsci import QsciLexerJavaScript, QsciScintilla, QsciAPIs
 from PyQt5.QtCore import QSettings, pyqtSlot, Qt, QStandardPaths
-from PyQt5.QtGui import QFont, QPixmap
-from PyQt5.QtWidgets import QWidget, QMessageBox, QProgressDialog, QFileDialog
+from PyQt5.QtGui import QFont, QPixmap, QIcon
+from PyQt5.QtWidgets import QWidget, QMessageBox, QProgressDialog, QFileDialog,\
+    QApplication
 
 from ImageWidget import ImageView
 from UiFrameworkTools import Ui_FormFrameworkTools
@@ -222,7 +226,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
     def onConnectSuccessed(self):
         # 连接成功发送代码验证密码是否正确
         self.closeWait()  # 关闭正在连接中的进度条
-        self._client.write(Protocol.pack(CodeGetVersion, Protocol.JAVASCRIPT_TYPE))
+        self._client.write(Protocol.pack(
+            CodeGetVersion, Protocol.JAVASCRIPT_TYPE))
         self._client.flush()
         Protocol.increase()
         self.showWait('正在验证密码...')
@@ -264,7 +269,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
         if self._client.state() == self._client.ConnectedState and self._client.isWritable():
             # 这里必须要有一个1表示图片类型
             data = b'\x01' + open(file, 'rb').read()
-            self._client.write(Protocol.pack(data, Protocol.IMAGE_TYPE))  # 发送图片数据
+            self._client.write(Protocol.pack(
+                data, Protocol.IMAGE_TYPE))  # 发送图片数据
             self._client.flush()
             Protocol.increase()  # 自增1
             self.showWait('正在发送中...')  # 显示进度条
@@ -305,7 +311,8 @@ class Window(QWidget, Ui_FormFrameworkTools):
             self._setting.setValue(
                 'codeEdit', self.codeEdit.text().strip())
             self._setting.sync()
-            self._client.write(Protocol.pack(self.formatCode(code), Protocol.JAVASCRIPT_TYPE))  # 发送数据
+            self._client.write(Protocol.pack(self.formatCode(
+                code), Protocol.JAVASCRIPT_TYPE))  # 发送数据
             self._client.flush()
             Protocol.increase()  # 自增1
             self.showWait('正在处理中...')  # 显示进度条
@@ -343,12 +350,14 @@ class Window(QWidget, Ui_FormFrameworkTools):
 
 
 if __name__ == '__main__':
-    import sys
-    import cgitb
     sys.excepthook = cgitb.enable(1, None, 5, '')
-    from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
+    app.setApplicationName('PS连接测试工具')
+    app.setApplicationDisplayName('PS连接测试工具')
+    app.setApplicationVersion('1.0')
     app.setStyle('Fusion')
+    if os.path.exists('images/app.ico'):
+        app.setWindowIcon(QIcon('images/app.ico'))
     w = Window()
     w.show()
     sys.exit(app.exec_())
