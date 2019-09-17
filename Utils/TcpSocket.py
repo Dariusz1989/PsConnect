@@ -31,9 +31,7 @@ class TcpSocket(QTcpSocket):
 
     def __init__(self, *args, **kwargs):
         super(TcpSocket, self).__init__(*args, **kwargs)
-        self._length = 0
         self._data = b''
-        self._hdata = b''
         # 连接成功的信号
         self.connected.connect(self.onRemoteConnected)
         # 连接丢失信号
@@ -53,29 +51,13 @@ class TcpSocket(QTcpSocket):
     def onRemoteReadyRead(self):
         # 读取接收的数据
         if self.bytesAvailable():
-            if self._length == 0:
-                # 读取4字节数据包长度
-                self._hdata = self.read(4)
-                if not self._hdata:
-                    return
-                self._length, = struct.unpack('>i', self._hdata)
-                print('length:', self._length)
-                self._data += self.read(self._length)
-                if len(self._data) == self._length:  # 可能第一次就读取完成了
-                    self._length = 0
-                    data = self._hdata + self._data
-                    self._hdata = b''
-                    self._data = b''
-                    self.messageReceived.emit(data)
-            else:  # 继续读取
-                self._data += self.read(self._length)
-                # >= 放弃随图片一起发过来的字符（解码的时候只解析前面数据）
-                # 忽略了后面的数据
-                if len(self._data) >= self._length:  # 读取完成了
-                    self._length = 0
-                    data = self._hdata + self._data
-                    self._hdata = b''
-                    self._data = b''
+            self._data += self.readAll().data()
+            dlen = len(self._data)
+            if dlen > 4:
+                hlen, = struct.unpack('>i', self._data[:4])
+                if dlen >= hlen + 4:
+                    data = self._data[:4 + hlen]
+                    self._data = self._data[4 + hlen:]
                     self.messageReceived.emit(data)
 
     def onRemoteError(self, socketError):

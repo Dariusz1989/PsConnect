@@ -62,8 +62,8 @@ if(app.documents.length > 0) {
     var desc1 = new ActionDescriptor();
     // 当前图片的ID
     desc1.putInteger( stringIDToTypeID( "documentID" ), app.activeDocument.id );
-    desc1.putInteger( stringIDToTypeID( "width" ), 800 );
-    desc1.putInteger( stringIDToTypeID( "height" ), 600 );
+    desc1.putInteger( stringIDToTypeID( "width" ), app.activeDocument.width );
+    desc1.putInteger( stringIDToTypeID( "height" ), app.activeDocument.height );
     desc1.putInteger( stringIDToTypeID( "format" ), "1" );
     executeAction( idNS, desc1, DialogModes.NO );
 }
